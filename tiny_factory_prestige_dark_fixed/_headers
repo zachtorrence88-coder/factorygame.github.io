@@ -1,0 +1,2 @@
+/*
+  Content-Security-Policy: frame-ancestors 'self' https://discord.com https://*.discord.com https://canary.discord.com https://ptb.discord.com

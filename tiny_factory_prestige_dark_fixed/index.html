@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tiny Factory Prestige Dark</title>
+<meta property="og:title" content="Tiny Factory Prestige Dark" />
+<meta property="og:type" content="website" />
+<meta property="og:description" content="Factorio-inspired browser factory game with prestige unlocks, dark mode, better belts, and late-game machines." />
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111827; --panel2:#0f172a; --border:#334155; --text:#e5e7eb; --muted:#94a3b8;
+    --resource:#1f2937; --drill:#b45309; --belt:#0369a1; --fastbelt:#1d4ed8; --inserter:#6d28d9; --splitter:#7c3aed;
+    --furnace:#c2410c; --steel:#ea580c; --assembler:#15803d; --assembler2:#16a34a; --seller:#65a30d; --chest:#a16207;
+    --generator:#b91c1c; --pole:#7e22ce; --solar:#0ea5e9; --solararray:#06b6d4; --button:#1e293b; --buttonText:#f8fafc;
+    --buttonActive:#22c55e; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  body.light{
+    --bg:#eef2f7; --panel:#ffffff; --panel2:#f8fafc; --border:#cbd5e1; --text:#0f172a; --muted:#475569;
+    --resource:#334155; --drill:#fde68a; --belt:#bae6fd; --fastbelt:#93c5fd; --inserter:#ddd6fe; --splitter:#c4b5fd;
+    --furnace:#fdba74; --steel:#fb923c; --assembler:#bbf7d0; --assembler2:#86efac; --seller:#d9f99d; --chest:#fef3c7;
+    --generator:#fecaca; --pole:#e9d5ff; --solar:#bfdbfe; --solararray:#7dd3fc; --button:#ffffff; --buttonText:#0f172a;
+    --buttonActive:#0f172a; --shadow:0 8px 24px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);transition:background .2s,color .2s}
+  .site-header{max-width:1400px;margin:0 auto;padding:20px 18px 0}
+  .site-header h1{font-size:32px;margin:0}
+  .site-header p{margin-top:8px;color:var(--muted)}
+  .wrap{max-width:1400px;margin:0 auto;padding:18px;display:grid;grid-template-columns:360px 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+  .header{padding:18px 18px 6px}
+  .content{padding:12px 18px 18px}
+  h2,h3{margin:0}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .stat{background:var(--panel2);border-radius:16px;padding:12px;border:1px solid var(--border)}
+  .small{font-size:13px;color:var(--muted)}
+  .big{font-size:28px;font-weight:bold}
+  .progressOuter{height:14px;background:#1f2937;border-radius:999px;overflow:hidden;margin-top:6px;border:1px solid var(--border)}
+  body.light .progressOuter{background:#e2e8f0}
+  .progressInner{height:100%;width:0%;background:#22c55e;transition:width .2s}
+  .toolbar,.dirs,.prestigeGrid{display:grid;gap:8px}
+  .dirs{grid-template-columns:repeat(4,1fr)}
+  button{border:1px solid var(--border);background:var(--button);color:var(--buttonText);border-radius:16px;padding:10px 12px;cursor:pointer;font-weight:700;transition:transform .05s ease, opacity .15s ease}
+  button:hover{transform:translateY(-1px)}
+  button.active,button.primary{background:var(--buttonActive);color:#fff;border-color:var(--buttonActive)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .tool-solar{background:#0284c7;color:#fff}.tool-pole{background:#6d28d9;color:#fff}.tool-drill{background:#a16207;color:#fff}
+  .tool-belt{background:#0ea5e9;color:#fff}.tool-fast_belt{background:#2563eb;color:#fff}.tool-inserter{background:#7c3aed;color:#fff}
+  .tool-splitter{background:#8b5cf6;color:#fff}.tool-furnace{background:#ea580c;color:#fff}.tool-steel_furnace{background:#f97316;color:#fff}
+  .tool-assembler{background:#16a34a;color:#fff}.tool-assembler2{background:#22c55e;color:#fff}.tool-generator{background:#dc2626;color:#fff}
+  .tool-seller{background:#65a30d;color:#fff}.tool-chest{background:#ca8a04;color:#111827}.tool-solar_array{background:#0891b2;color:#fff}
+  .tool-rotate{background:#475569;color:#fff}.tool-erase{background:#ef4444;color:#fff}
+  .row{display:flex;gap:8px}.row>*{flex:1}
+  .help{margin-top:14px;background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:12px;line-height:1.45}
+  .badges{display:flex;flex-wrap:wrap;gap:8px}
+  .badge{background:var(--panel2);border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:13px}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}
+  .cell{position:relative;aspect-ratio:1/1;border:1px solid var(--border);border-radius:18px;padding:6px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;min-height:78px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;font-size:10px;font-weight:bold}
+  .bottom{display:flex;justify-content:space-between;align-items:flex-end;font-size:10px}
+  .resource{background:var(--resource)}
+  .drill{background:var(--drill)} .belt{background:var(--belt)} .fast_belt{background:var(--fastbelt)}
+  .inserter{background:var(--inserter)} .splitter{background:var(--splitter)} .furnace{background:var(--furnace)}
+  .steel_furnace{background:var(--steel)} .assembler{background:var(--assembler)} .assembler2{background:var(--assembler2)}
+  .seller{background:var(--seller)} .chest{background:var(--chest)} .generator{background:var(--generator)}
+  .pole{background:var(--pole)} .solar{background:var(--solar)} .solar_array{background:var(--solararray)} .empty{background:var(--panel2)}
+  .powered{outline:3px solid #22c55e}
+  .unpowered{outline:3px solid #ef4444}
+  .win,.prestigeReady{margin-top:10px;padding:12px;border-radius:16px;background:#052e16;border:1px solid #166534;color:#bbf7d0;font-weight:bold}
+  body.light .win, body.light .prestigeReady{background:#ecfdf5;border-color:#86efac;color:#166534}
+  .prestigeCard{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:10px}
+  .locked{opacity:.55}
+  .bottomSection{max-width:1400px;margin:0 auto 18px;padding:0 18px}
+  .toggleRow{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+  @media (max-width: 1024px){ .wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="site-header">
+  <div class="toggleRow">
+    <button id="themeBtn">Light Mode</button>
+  </div>
+  <h1>Tiny Factory Prestige</h1>
+  <p>Factorio-inspired factory game with progression resets, dark mode, and better logistics.</p>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="header"><h2>Build Panel</h2></div>
+    <div class="content">
+      <div class="statgrid">
+        <div class="stat"><div class="small">Money</div><div class="big" id="money">$70</div></div>
+        <div class="stat"><div class="small">Ticks</div><div class="big" id="ticks">0</div></div>
+      </div>
+
+      <div class="statgrid">
+        <div class="stat"><div class="small">Prestiges</div><div class="big" id="prestigeCount">0</div></div>
+        <div class="stat"><div class="small">Tech Cores</div><div class="big" id="coreCount">0</div></div>
+      </div>
+
+      <div class="small">Goal: $1000 <span id="pct" style="float:right;">7%</span></div>
+      <div class="progressOuter"><div class="progressInner" id="bar"></div></div>
+      <div id="goalBox"></div>
+      <div id="prestigeBox"></div>
+
+      <h3 style="margin-top:14px;">Build</h3>
+      <div class="toolbar" id="tools"></div>
+
+      <h3 style="margin-top:14px;">Direction</h3>
+      <div class="dirs" id="dirs"></div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="primary" id="runBtn">Pause</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button id="prestigeBtn">Prestige</button>
+      </div>
+
+      <div class="help">
+        <b>Fixes in this build</b><br>
+        • Belts now push correctly into other belts and into machines.<br>
+        • Unlocks moved below the play area.<br>
+        • Colored build buttons.<br>
+        • Dark mode by default with a light mode toggle.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="header">
+      <h2>Factory Floor</h2>
+      <div class="badges" style="margin-top:10px;">
+        <div class="badge" id="mined">Mined: 0</div>
+        <div class="badge" id="smelted">Smelted: 0</div>
+        <div class="badge" id="crafted">Crafted: 0</div>
+        <div class="badge" id="sold">Sold: $0</div>
+      </div>
+      <div class="legend" style="margin-top:10px;">
+        <div>🪨 iron ore</div><div>🟠 copper ore</div>
+        <div>⚫ coal</div><div>⬜ iron plate</div>
+        <div>🟧 copper plate</div><div>⚙️ gear</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottomSection">
+  <div class="card">
+    <div class="header"><h2>Tech Unlocks</h2></div>
+    <div class="content">
+      <div class="prestigeGrid" id="unlockList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const W = 12, H = 10, TICK_MS = 250;
+const DIRS = [
+  {dx:1,dy:0,arrow:"→",key:"right"},
+  {dx:0,dy:1,arrow:"↓",key:"down"},
+  {dx:-1,dy:0,arrow:"←",key:"left"},
+  {dx:0,dy:-1,arrow:"↑",key:"up"},
+];
+const PRESTIGE_GOAL = 1000;
+const COSTS = {
+  drill:12, belt:2, inserter:8, furnace:16, assembler:28, seller:14, chest:10, generator:22, pole:6, solar:12,
+  fast_belt:10, splitter:18, steel_furnace:34, assembler2:48, solar_array:40
+};
+const NEEDS_POWER = new Set(["drill","inserter","furnace","steel_furnace","assembler","assembler2"]);
+const ITEM_EMOJI = { iron_ore:"🪨", copper_ore:"🟠", coal:"⚫", iron_plate:"⬜", copper_plate:"🟧", gear:"⚙️" };
+const ITEM_LABEL = { iron_ore:"Iron Ore", copper_ore:"Copper Ore", coal:"Coal", iron_plate:"Iron Plate", copper_plate:"Copper Plate", gear:"Gear" };
+const VALUE = { iron_ore:2, copper_ore:2, coal:3, iron_plate:7, copper_plate:7, gear:16 };
+const UNLOCKS = [
+  {prestige:0, key:"solar", label:"Solar Panel", desc:"Free early power."},
+  {prestige:0, key:"drill", label:"Drill", desc:"Mines ore patches."},
+  {prestige:0, key:"belt", label:"Belt", desc:"Moves items forward."},
+  {prestige:0, key:"inserter", label:"Inserter", desc:"Grabs from behind, places ahead."},
+  {prestige:0, key:"furnace", label:"Furnace", desc:"Smelts ore into plates."},
+  {prestige:0, key:"assembler", label:"Assembler", desc:"Turns 2 iron plates into 1 gear."},
+  {prestige:1, key:"fast_belt", label:"Fast Belt", desc:"Faster logistics."},
+  {prestige:2, key:"splitter", label:"Splitter", desc:"Alternates output left/right."},
+  {prestige:3, key:"steel_furnace", label:"Steel Furnace", desc:"Faster smelting."},
+  {prestige:4, key:"assembler2", label:"Assembler Mk2", desc:"Faster gear crafting."},
+  {prestige:5, key:"solar_array", label:"Solar Array", desc:"Bigger power coverage."},
+];
+
+let grid = [];
+let money = 70;
+let ticks = 0;
+let prestigeCount = 0;
+let techCores = 0;
+let selectedTool = "solar";
+let selectedDir = 0;
+let running = true;
+let stats = { mined:0, smelted:0, crafted:0, sold:0 };
+let interval = null;
+
+function isUnlocked(key){ const found = UNLOCKS.find(x => x.key === key); return !found || prestigeCount >= found.prestige; }
+function visibleTools() {
+  return [
+    ["solar",`Solar ($${COSTS.solar})`],["pole",`Pole ($${COSTS.pole})`],["drill",`Drill ($${COSTS.drill})`],
+    ["belt",`Belt ($${COSTS.belt})`],["inserter",`Inserter ($${COSTS.inserter})`],["furnace",`Furnace ($${COSTS.furnace})`],
+    ["assembler",`Assembler ($${COSTS.assembler})`],["generator",`Generator ($${COSTS.generator})`],["seller",`Market ($${COSTS.seller})`],
+    ["chest",`Chest ($${COSTS.chest})`],["fast_belt",`Fast Belt ($${COSTS.fast_belt})`],["splitter",`Splitter ($${COSTS.splitter})`],
+    ["steel_furnace",`Steel Furnace ($${COSTS.steel_furnace})`],["assembler2",`Assembler Mk2 ($${COSTS.assembler2})`],["solar_array",`Solar Array ($${COSTS.solar_array})`],
+    ["rotate","Rotate"],["erase","Erase"],
+  ].filter(([key]) => key === "rotate" || key === "erase" || isUnlocked(key));
+}
+
+function makeCell(type="empty", extra={}) {
+  return Object.assign({
+    type, dir:0, ground:null, powered:false, progress:0,
+    heldItem:null, outItem:null, fuel:0, splitFlip:0, justReceived:false,
+    inv:{ ore:0, oreType:null, coal:0, iron_plate:0 }, chest:[]
+  }, extra);
+}
+function createMap() {
+  const g = Array.from({length:H},()=>Array.from({length:W},()=>makeCell()));
+  const setResource=(x,y,ground)=>g[y][x]=makeCell("resource",{ground});
+  [[1,1],[2,1],[1,2],[2,2],[1,3]].forEach(([x,y])=>setResource(x,y,"iron_ore"));
+  [[8,1],[9,1],[8,2],[9,2],[8,3]].forEach(([x,y])=>setResource(x,y,"copper_ore"));
+  [[4,6],[5,6],[4,7],[5,7],[4,8]].forEach(([x,y])=>setResource(x,y,"coal"));
+  return g;
+}
+function copyGrid(g){ return g.map(row=>row.map(c=>({...c, inv:{...c.inv}, chest:[...c.chest]}))); }
+function inBounds(x,y){ return x>=0 && y>=0 && x<W && y<H; }
+function groundEmoji(ground){ return ITEM_EMOJI[ground] || ""; }
+function itemVisual(item){ return item ? ITEM_EMOJI[item] : ""; }
+function topLabel(cell){
+  switch(cell.type){
+    case "resource": return ITEM_LABEL[cell.ground];
+    case "drill": return "Drill"; case "belt": return "Belt"; case "fast_belt": return "Fast Belt";
+    case "inserter": return "Inserter"; case "splitter": return "Splitter"; case "furnace": return "Furnace";
+    case "steel_furnace": return "Steel Furnace"; case "assembler": return "Assembler"; case "assembler2": return "Assembler Mk2";
+    case "seller": return "Market"; case "chest": return "Chest"; case "generator": return "Generator"; case "pole": return "Pole";
+    case "solar": return "Solar"; case "solar_array": return "Solar Array"; default: return "";
+  }
+}
+function machineNeedsPower(type){ return NEEDS_POWER.has(type); }
+function canPlace(type, cell){
+  if (!isUnlocked(type) && type !== "rotate" && type !== "erase") return false;
+  if (cell.type === "resource") return type === "drill";
+  return cell.type === "empty";
+}
+function recalcPower(g){
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) g[y][x].powered = false;
+  const sources = [];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const c = g[y][x];
+    if (c.type === "solar") sources.push({x,y,range:2});
+    if (c.type === "solar_array") sources.push({x,y,range:3});
+    if (c.type === "generator" && c.fuel > 0) sources.push({x,y,range:2});
+  }
+  for (const src of sources) {
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      if (Math.abs(src.x - x) + Math.abs(src.y - y) <= src.range) g[y][x].powered = true;
+    }
+  }
+  const poweredPoles = [];
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) if (g[y][x].type === "pole" && g[y][x].powered) poweredPoles.push({x,y});
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      const c = g[y][x];
+      if (c.type !== "pole" || c.powered) continue;
+      for (const p of poweredPoles) {
+        if (Math.abs(p.x - x) + Math.abs(p.y - y) <= 3) {
+          c.powered = true; poweredPoles.push({x,y}); changed = true; break;
+        }
+      }
+    }
+  }
+  for (const p of poweredPoles) {
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      if (Math.abs(p.x - x) + Math.abs(p.y - y) <= 2) g[y][x].powered = true;
+    }
+  }
+}
+function acceptsItem(cell, item) {
+  if (!cell || !item) return false;
+  if (["belt","fast_belt","splitter"].includes(cell.type)) return !cell.heldItem;
+  if (cell.type === "chest") return cell.chest.length < 8;
+  if (cell.type === "seller") return true;
+  if (cell.type === "generator") return item === "coal" && cell.fuel < 8;
+  if (cell.type === "furnace" || cell.type === "steel_furnace") {
+    if (item === "coal") return cell.inv.coal < 4;
+    if (item === "iron_ore" || item === "copper_ore") return cell.inv.ore < 1 && !cell.outItem;
+    return false;
+  }
+  if (cell.type === "assembler" || cell.type === "assembler2") return item === "iron_plate" && cell.inv.iron_plate < 2 && !cell.outItem;
+  return false;
+}
+function canProvide(cell) {
+  if (!cell) return null;
+  if (["belt","fast_belt","splitter"].includes(cell.type)) return cell.heldItem;
+  if (["drill","furnace","steel_furnace","assembler","assembler2"].includes(cell.type)) return cell.outItem;
+  if (cell.type === "chest") return cell.chest[0] || null;
+  return null;
+}
+function removeProvided(cell) {
+  if (["belt","fast_belt","splitter"].includes(cell.type)) cell.heldItem = null;
+  else if (["drill","furnace","steel_furnace","assembler","assembler2"].includes(cell.type)) cell.outItem = null;
+  else if (cell.type === "chest") cell.chest.shift();
+}
+function addItem(cell, item) {
+  if (["belt","fast_belt","splitter"].includes(cell.type)) cell.heldItem = item;
+  else if (cell.type === "chest") cell.chest.push(item);
+  else if (cell.type === "generator") cell.fuel += 1;
+  else if (cell.type === "furnace" || cell.type === "steel_furnace") {
+    if (item === "coal") cell.inv.coal += 1;
+    else { cell.inv.ore = 1; cell.inv.oreType = item; }
+  } else if ((cell.type === "assembler" || cell.type === "assembler2") && item === "iron_plate") {
+    cell.inv.iron_plate += 1;
+  }
+}
+function renderUnlocks(){
+  const el = document.getElementById("unlockList");
+  el.innerHTML = "";
+  UNLOCKS.forEach(u => {
+    const div = document.createElement("div");
+    div.className = "prestigeCard " + (isUnlocked(u.key) ? "" : "locked");
+    div.innerHTML = `<b>${u.label}</b><div class="small">${u.desc}</div><div class="small">${isUnlocked(u.key) ? "Unlocked" : "Unlocks at Prestige " + u.prestige}</div>`;
+    el.appendChild(div);
+  });
+}
+function renderToolbar() {
+  const toolsEl = document.getElementById("tools");
+  toolsEl.innerHTML = "";
+  visibleTools().forEach(([key,label]) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.classList.add("tool-" + key);
+    if (selectedTool === key) btn.classList.add("active");
+    const disabled = COSTS[key] ? money < COSTS[key] : false;
+    btn.disabled = disabled && !["rotate","erase"].includes(key);
+    btn.onclick = () => { selectedTool = key; render(); };
+    toolsEl.appendChild(btn);
+  });
+}
+function renderDirs() {
+  const dirsEl = document.getElementById("dirs");
+  dirsEl.innerHTML = "";
+  DIRS.forEach((d,i) => {
+    const btn = document.createElement("button");
+    btn.textContent = d.arrow;
+    if (selectedDir === i) btn.classList.add("active");
+    btn.onclick = () => { selectedDir = i; render(); };
+    dirsEl.appendChild(btn);
+  });
+}
+function renderStats() {
+  document.getElementById("money").textContent = "$" + money;
+  document.getElementById("ticks").textContent = ticks;
+  document.getElementById("prestigeCount").textContent = prestigeCount;
+  document.getElementById("coreCount").textContent = techCores;
+  const pct = Math.min(100, Math.floor((money/PRESTIGE_GOAL)*100));
+  document.getElementById("pct").textContent = pct + "%";
+  document.getElementById("bar").style.width = pct + "%";
+  document.getElementById("mined").textContent = "Mined: " + stats.mined;
+  document.getElementById("smelted").textContent = "Smelted: " + stats.smelted;
+  document.getElementById("crafted").textContent = "Crafted: " + stats.crafted;
+  document.getElementById("sold").textContent = "Sold: $" + stats.sold;
+  document.getElementById("runBtn").textContent = running ? "Pause" : "Run";
+  document.getElementById("goalBox").innerHTML = money >= PRESTIGE_GOAL ? '<div class="win">Prestige ready. Reset now to unlock the next tech tier.</div>' : '';
+  const nextUnlock = UNLOCKS.find(u => u.prestige === prestigeCount + 1);
+  document.getElementById("prestigeBox").innerHTML = nextUnlock
+    ? `<div class="prestigeReady">Next prestige unlock: <b>${nextUnlock.label}</b></div>`
+    : '<div class="prestigeReady">All tech unlocked. Keep prestigeing for extra cores.</div>';
+  document.getElementById("prestigeBtn").disabled = money < PRESTIGE_GOAL;
+}
+function renderGrid() {
+  const gridEl = document.getElementById("grid");
+  gridEl.innerHTML = "";
+  for (let y=0; y<H; y++) for (let x=0; x<W; x++) {
+    const cell = grid[y][x];
+    const dirArrow = ["drill","belt","fast_belt","inserter","splitter","furnace","steel_furnace","assembler","assembler2"].includes(cell.type) ? DIRS[cell.dir||0].arrow : "";
+    const shownItem = cell.heldItem || cell.outItem;
+    let info = "";
+    if (cell.type === "drill") info = `${cell.progress}/3`;
+    if (cell.type === "furnace") info = `C${cell.inv.coal}|O${cell.inv.ore}${cell.progress?` ${cell.progress}/4`:""}`;
+    if (cell.type === "steel_furnace") info = `C${cell.inv.coal}|O${cell.inv.ore}${cell.progress?` ${cell.progress}/3`:""}`;
+    if (cell.type === "assembler") info = `P${cell.inv.iron_plate}${cell.progress?` ${cell.progress}/5`:""}`;
+    if (cell.type === "assembler2") info = `P${cell.inv.iron_plate}${cell.progress?` ${cell.progress}/3`:""}`;
+    if (cell.type === "chest") info = `${cell.chest.length}/8`;
+    if (cell.type === "generator") info = `⚡${cell.fuel}`;
+    if (cell.type === "splitter") info = cell.splitFlip ? "R" : "L";
+    const powerClass = machineNeedsPower(cell.type) ? (cell.powered ? "powered" : "unpowered") : "";
+    const btn = document.createElement("button");
+    btn.className = `cell ${cell.type} ${powerClass}`;
+    btn.title = topLabel(cell) + (dirArrow ? ` ${dirArrow}` : "");
+    btn.innerHTML = `<div class="top"><span>${topLabel(cell)}</span><span>${dirArrow}</span></div>
+      <div class="bottom"><span style="font-size:20px;">${cell.type==="resource" ? groundEmoji(cell.ground) : (itemVisual(shownItem) || (cell.type==="seller"?"💰":cell.type==="chest"?"📦":cell.type==="generator"?"🔥":cell.type==="pole"?"⚡":cell.type==="solar"?"☀️":cell.type==="solar_array"?"🌞":cell.type==="splitter"?"↕️":""))}</span><span>${info}</span></div>`;
+    btn.onclick = ()=>onCellClick(x,y);
+    gridEl.appendChild(btn);
+  }
+}
+function render(){ renderToolbar(); renderDirs(); renderStats(); renderGrid(); renderUnlocks(); }
+
+function onCellClick(x,y) {
+  const cell = grid[y][x];
+  if (selectedTool === "erase") {
+    if (cell.type === "resource") grid[y][x] = makeCell("resource",{ground:cell.ground});
+    else grid[y][x] = makeCell();
+    recalcPower(grid); render(); return;
+  }
+  if (selectedTool === "rotate") {
+    if (["drill","belt","fast_belt","inserter","splitter","furnace","steel_furnace","assembler","assembler2"].includes(cell.type)) {
+      cell.dir = (cell.dir + 1) % 4; render();
+    }
+    return;
+  }
+  if (!canPlace(selectedTool, cell)) return;
+  if (COSTS[selectedTool] && money < COSTS[selectedTool]) return;
+  if (cell.type === "resource") {
+    if (selectedTool === "drill") { grid[y][x] = makeCell("drill",{dir:selectedDir,ground:cell.ground}); money -= COSTS.drill; }
+  } else {
+    grid[y][x] = makeCell(selectedTool,{dir:selectedDir}); money -= COSTS[selectedTool];
+  }
+  recalcPower(grid); render();
+}
+
+function tryMoveItem(next, fromCell, nx, ny) {
+  if (!fromCell.heldItem || !inBounds(nx,ny)) return false;
+  const target = next[ny][nx];
+  const item = fromCell.heldItem;
+  if (target.type === "seller") {
+    soldMoneyGlobal += VALUE[item] || 1;
+    fromCell.heldItem = null;
+    return true;
+  }
+  if (acceptsItem(target, item) && !target.justReceived) {
+    addItem(target, item);
+    target.justReceived = true;
+    fromCell.heldItem = null;
+    return true;
+  }
+  return false;
+}
+
+let soldMoneyGlobal = 0;
+function tick() {
+  const next = copyGrid(grid);
+  let minedNow = 0, smeltedNow = 0, craftedNow = 0;
+  soldMoneyGlobal = 0;
+
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) next[y][x].justReceived = false;
+
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const c = next[y][x];
+    if (c.type === "generator" && c.fuel > 0) {
+      c.progress += 1;
+      if (c.progress >= 8) { c.progress = 0; c.fuel -= 1; }
+    }
+  }
+
+  recalcPower(next);
+
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const c = next[y][x];
+    if (c.type === "drill" && c.powered) {
+      c.progress += 1;
+      if (c.progress >= 3) { c.progress = 0; if (!c.outItem && c.ground) { c.outItem = c.ground; minedNow += 1; } }
+    }
+    if ((c.type === "furnace" || c.type === "steel_furnace") && c.powered) {
+      const hasFuel = c.inv.coal > 0, oreType = c.inv.oreType;
+      const needed = c.type === "steel_furnace" ? 3 : 4;
+      if (!c.outItem && hasFuel && oreType) {
+        c.progress += 1;
+        if (c.progress >= needed) {
+          c.progress = 0;
+          if (c.type === "steel_furnace") {
+            if (ticks % 2 === 0) c.inv.coal -= 1;
+          } else c.inv.coal -= 1;
+          if (c.inv.coal < 0) c.inv.coal = 0;
+          c.inv.ore = 0;
+          c.outItem = oreType === "iron_ore" ? "iron_plate" : "copper_plate";
+          c.inv.oreType = null; smeltedNow += 1;
+        }
+      } else c.progress = 0;
+    }
+    if ((c.type === "assembler" || c.type === "assembler2") && c.powered) {
+      const needed = c.type === "assembler2" ? 3 : 5;
+      if (!c.outItem && c.inv.iron_plate >= 2) {
+        c.progress += 1;
+        if (c.progress >= needed) { c.progress = 0; c.inv.iron_plate -= 2; c.outItem = "gear"; craftedNow += 1; }
+      } else c.progress = 0;
+    }
+  }
+
+  const beltMoves = [];
+  const fastBeltMoves = [];
+  const directOutputs = [];
+  const inserterMoves = [];
+  const splitterMoves = [];
+
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const c = next[y][x], d = DIRS[c.dir || 0];
+    if (c.type === "belt" && c.heldItem) beltMoves.push({x,y,dx:d.dx,dy:d.dy});
+    if (c.type === "fast_belt" && c.heldItem) fastBeltMoves.push({x,y,dx:d.dx,dy:d.dy});
+    if (["drill","furnace","steel_furnace","assembler","assembler2"].includes(c.type) && c.outItem) directOutputs.push({x,y,nx:x+d.dx,ny:y+d.dy});
+    if (c.type === "inserter" && c.powered) {
+      const bx = x - d.dx, by = y - d.dy, fx = x + d.dx, fy = y + d.dy;
+      if (inBounds(bx,by) && inBounds(fx,fy)) inserterMoves.push({bx,by,fx,fy});
+    }
+    if (c.type === "splitter" && c.heldItem) splitterMoves.push({x,y});
+  }
+
+  // Regular belts: one step, can move into belts and machines
+  for (const m of beltMoves) {
+    const from = next[m.y][m.x];
+    tryMoveItem(next, from, m.x + m.dx, m.y + m.dy);
+  }
+
+  // Fast belts: attempt two steps in same tick
+  for (const m of fastBeltMoves) {
+    const from = next[m.y][m.x];
+    if (tryMoveItem(next, from, m.x + m.dx, m.y + m.dy)) {
+      const midX = m.x + m.dx, midY = m.y + m.dy;
+      const midCell = inBounds(midX, midY) ? next[midY][midX] : null;
+      if (midCell && midCell.type === "fast_belt" && midCell.heldItem && !midCell.justReceived) {
+        tryMoveItem(next, midCell, midX + m.dx, midY + m.dy);
+      }
+    }
+  }
+
+  // Splitters alternate left/right
+  for (const s of splitterMoves) {
+    const cell = next[s.y][s.x];
+    if (!cell.heldItem) continue;
+    const dir = DIRS[cell.dir || 0];
+    const left = {x:s.x + dir.dx + DIRS[(cell.dir+3)%4].dx, y:s.y + dir.dy + DIRS[(cell.dir+3)%4].dy};
+    const right = {x:s.x + dir.dx + DIRS[(cell.dir+1)%4].dx, y:s.y + dir.dy + DIRS[(cell.dir+1)%4].dy};
+    const order = cell.splitFlip ? [right,left] : [left,right];
+    for (const pos of order) {
+      if (tryMoveItem(next, cell, pos.x, pos.y)) { cell.splitFlip = cell.splitFlip ? 0 : 1; break; }
+    }
+  }
+
+  // Machine outputs into belts or machines
+  for (const m of directOutputs) {
+    if (!inBounds(m.nx,m.ny)) continue;
+    const from = next[m.y][m.x], item = from.outItem;
+    if (!item) continue;
+    const target = next[m.ny][m.nx];
+    if (target.type === "seller") { soldMoneyGlobal += VALUE[item] || 1; from.outItem = null; }
+    else if (acceptsItem(target,item) && !target.justReceived) { addItem(target,item); target.justReceived = true; from.outItem = null; }
+  }
+
+  // Inserters into machines or belts
+  for (const m of inserterMoves) {
+    const source = next[m.by][m.bx], target = next[m.fy][m.fx], item = canProvide(source);
+    if (!item) continue;
+    if (target.type === "seller") { soldMoneyGlobal += VALUE[item] || 1; removeProvided(source); }
+    else if (acceptsItem(target,item) && !target.justReceived) { removeProvided(source); addItem(target,item); target.justReceived = true; }
+  }
+
+  money += soldMoneyGlobal;
+  stats.mined += minedNow; stats.smelted += smeltedNow; stats.crafted += craftedNow; stats.sold += soldMoneyGlobal;
+  ticks += 1; grid = next; render();
+}
+function startLoop(){ stopLoop(); if (running) interval = setInterval(tick, TICK_MS); }
+function stopLoop(){ if (interval) clearInterval(interval); interval = null; }
+function resetFactory(){
+  grid = createMap(); money = 70 + prestigeCount * 10; ticks = 0; selectedDir = 0; running = true;
+  if (!isUnlocked(selectedTool) || selectedTool === "rotate" || selectedTool === "erase") selectedTool = isUnlocked("solar_array") ? "solar_array" : "solar";
+  stats = { mined:0, smelted:0, crafted:0, sold:0 };
+  recalcPower(grid); startLoop(); render();
+}
+function prestige(){ if (money < PRESTIGE_GOAL) return; prestigeCount += 1; techCores += 1; resetFactory(); }
+document.getElementById("runBtn").onclick = ()=>{ running = !running; startLoop(); render(); };
+document.getElementById("resetBtn").onclick = ()=>resetFactory();
+document.getElementById("prestigeBtn").onclick = ()=>prestige();
+document.getElementById("themeBtn").onclick = ()=>{
+  document.body.classList.toggle("light");
+  document.getElementById("themeBtn").textContent = document.body.classList.contains("light") ? "Dark Mode" : "Light Mode";
+};
+resetFactory();
+</script>
+</body>
+</html>
