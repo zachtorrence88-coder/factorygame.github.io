@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "factorygame",
+  "compatibility_date": "2025-09-27",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "tiny_factory_prestige_dark_fixed"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
